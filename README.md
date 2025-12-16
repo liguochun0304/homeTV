@@ -41,6 +41,14 @@ npm start
 node server.js
 ```
 
+### Docker 方式
+```bash
+# 克隆项目
+git clone https://github.com/your-username/dongguaTV.git
+cd dongguaTV
+# 编译和启动
+docker compose up -d --build
+```
 ### 访问应用
 - 前端页面: http://localhost:3000
 - 后台管理: http://localhost:3000/admin.html
