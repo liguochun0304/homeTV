@@ -77,22 +77,27 @@
         },
         methods: {
             async login() {
-                const res = await fetch('/api/admin/login', {
+                const res = await fetch('/api/v1/user/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ password: this.password })
+                    body: JSON.stringify({ username: 'admin', password: this.password })
                 });
                 const data = await res.json();
-                if (data.success) {
+                if (data.success && data.token) {
+                    localStorage.setItem('hometv_token', data.token);
                     this.isLoggedIn = true;
                     this.fetchSites();
                 } else {
-                    alert(data.msg);
+                    alert(data.message || '登录失败');
                 }
             },
             async fetchSites() {
-                const res = await fetch('/api/admin/sites');
-                this.sites = await res.json();
+                const token = localStorage.getItem('hometv_token');
+                const res = await fetch('/api/v1/admin/sites', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                this.sites = data.data || [];
             },
             addSite() {
                 this.sites.push({ key: 'new', name: '新资源', api: '', active: true });
@@ -101,12 +106,21 @@
                 if(confirm('确定删除吗？')) this.sites.splice(index, 1);
             },
             async saveSites() {
-                const res = await fetch('/api/admin/sites', {
+                const token = localStorage.getItem('hometv_token');
+                const res = await fetch('/api/v1/admin/sites', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
                     body: JSON.stringify({ sites: this.sites })
                 });
-                alert('保存成功！');
+                const data = await res.json();
+                if (data.success || data.code === 0) {
+                    alert('保存成功！');
+                } else {
+                    alert('保存失败：' + (data.message || '未知错误'));
+                }
             }
         }
     }).mount('#app');

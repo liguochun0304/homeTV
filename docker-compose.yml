@@ -1,12 +1,58 @@
-
+version: "3"
 services:
-  dongguatv:
-    build: .
-    container_name: dongguatv
-    restart: unless-stopped
-    ports:
-    - "3000:3000"
+  flask-api-demo:
+    image: flask-api-demo:1.0.0
+    container_name: flask-api-demo
+
+    privileged: true
+    restart: always
+
     environment:
-    #- PORT=3000
-    - TMDB_API_KEY=key
-    - ADMIN_PASSWORD=admin
+      - PROCESSES=4
+      - HTTP_TIMEOUT=60
+
+    depends_on:
+      - flask-api-demo-postgres
+      - flask-api-demo-redis
+
+    ports:
+      - "2021:5000"
+
+    volumes:
+      - "/data/flask-api-demo/data:/data/data"
+      - "/data/flask-api-demo/log:/data/log"
+      - "./:/work"
+
+  flask-api-demo-postgres:
+    image: postgis/postgis:14-3.4
+    container_name: flask-api-demo-postgres
+    restart: always
+
+    ports:
+      - "20211:5432"
+
+    environment:
+      # 使用上海时区
+      - TZ=Asia/Shanghai
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hometv
+      - POSTGRES_USER=postgres
+
+    volumes:
+      - /data/flask-api-demo/data/postgres:/var/lib/postgresql/data
+
+  flask-api-demo-redis:
+    image: redis:6
+    container_name: flask-api-demo-redis
+    restart: always
+
+    ports:
+      - "20212:6379"
+
+    volumes:
+      - /data/flask-api-demo/data/redis:/data
+
+networks:
+  default:
+    external: true
+    name: flask
